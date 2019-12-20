@@ -1,39 +1,9 @@
 // Dependencies
-const functions = require('firebase-functions');
-const firestoreAPI = require("./firestoreAPI");
-const express = require("express");
-const joi = require("@hapi/joi"); // https://hapi.dev/family/joi/?v=16.1.8
-const cors = require("cors");
+import firestoreAPI from "../firestoreAPI";
 
-// Fields
-const app = express();
-const collectionName = "Metrics";
-const baseEndpoint = `/${collectionName}/`;
-
-// Joi Schemas
-const metricSchema = joi.object({
-    accountId: joi.string()
-        .required(),
-    
-    alias: joi.string()
-        .min(3)
-        .max(128)
-        .required(),
-
-    number: joi.number()
-        .required(),
-
-    timestamp: joi.string()
-        .isoDate().message("\"timestamp\" must be in ISO 8601 date format")
-        .required()
-});
-
-// RESTful API
-app.use(express.json()); // use json for responses
-app.use(cors({ origin: true }));
-
+// CRUD operations
 // Create
-app.post(baseEndpoint, async (req, res) => 
+async function Create(req, res, schema, collectionName) 
 {
     let response = {
         "data": {},
@@ -42,7 +12,7 @@ app.post(baseEndpoint, async (req, res) =>
 
     try 
 	{
-        let validationResult = metricSchema.validate(req.body);
+        let validationResult = schema.validate(req.body);
 
         // If error is undefined, then validation succeeded. 
         if(validationResult.error === undefined)
@@ -65,10 +35,10 @@ app.post(baseEndpoint, async (req, res) =>
     }
     
     res.send(response);
-});
+}
 
 // Retrieve all
-app.get(baseEndpoint, async (req, res) => 
+async function GetAll(req, res, collectionName)
 {
     let response = {
         "data": undefined,
@@ -87,7 +57,7 @@ app.get(baseEndpoint, async (req, res) =>
         }
         else
         {
-            response.errorMessage = "Could not retrieve metrics.";
+            response.errorMessage = `Could not retrieve ${collectionName}.`;
             res.status(404);
         }
 	}
@@ -99,7 +69,7 @@ app.get(baseEndpoint, async (req, res) =>
     }
     
     res.send(response);
-});
+}
 
 // Retrieve one
 app.get(baseEndpoint + ":id", async (req, res) => 
@@ -111,8 +81,8 @@ app.get(baseEndpoint + ":id", async (req, res) =>
 
 	try 
 	{
-        let metricId = req.params.id;
-        let data = await firestoreAPI.getDocument(collectionName, metricId);
+        let itemId = req.params.id;
+        let data = await firestoreAPI.getDocument(collectionName, itemId);
 
         // If data is not undefined/null then it succeeded
         if(!(data === undefined))
@@ -123,7 +93,7 @@ app.get(baseEndpoint + ":id", async (req, res) =>
         }
         else 
         {
-            response.errorMessage = `Could not find metric with id: ${metricId}`;
+            response.errorMessage = `Could not find data with id: ${itemId}`;
             res.status(404);
         }
 	}
@@ -147,13 +117,13 @@ app.put(baseEndpoint + ":id", async (req, res) =>
 
     try 
 	{
-        let metricId = req.params.id;
-        let validationResult = metricSchema.validate(req.body);
+        let itemId = req.params.id;
+        let validationResult = dashboardSchema.validate(req.body);
 
         // If error is undefined/null, then validation succeeded. 
         if(validationResult.error === undefined)
         {
-            let success = await firestoreAPI.updateDocument(collectionName, validationResult.value, metricId);
+            let success = await firestoreAPI.updateDocument(collectionName, validationResult.value, itemId);
             if(success)
             {
                 response.data = "200 OK";
@@ -161,7 +131,7 @@ app.put(baseEndpoint + ":id", async (req, res) =>
             }
             else 
             {
-                response.errorMessage = `Could not find metric with id: ${metricId}`;
+                response.errorMessage = `Could not find data with id: ${itemId}`;
                 res.status(404);
             }
         }
@@ -191,15 +161,15 @@ app.delete(baseEndpoint + ":id", async (req, res) =>
 
     try 
 	{
-        let metricId = req.params.id;
-        if(metricId === undefined)
+        let itemId = req.params.id;
+        if(itemId === undefined)
         {
-            response.errorMessage = "An Id must be specified.";
+            response.errorMessage = "An id must be specified.";
             res.status(405);
         }
         else
         {
-            let success = await firestoreAPI.deleteDocument(collectionName, metricId);
+            let success = await firestoreAPI.deleteDocument(collectionName, itemId);
             if(success)
             {
                 response.data = "200 OK";
@@ -207,7 +177,7 @@ app.delete(baseEndpoint + ":id", async (req, res) =>
             }
             else 
             {
-                response.errorMessage = `Could not find metric with id: ${metricId}`;
+                response.errorMessage = `Could not find data with id: ${itemId}`;
                 res.status(404);
             }
         }
@@ -229,4 +199,4 @@ app.delete(baseEndpoint + ":id", async (req, res) =>
 // });
 
 // Expose Express API as a single Cloud Function:
-exports.api = functions.region("europe-west1").https.onRequest(app);
+exports.app = functions.region("europe-west1").https.onRequest(app);

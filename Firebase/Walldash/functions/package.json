@@ -15,9 +15,11 @@
   "dependencies": {
     "@hapi/joi": "^16.1.8",
     "cors": "^2.8.5",
+    "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "firebase-admin": "^8.8.0",
-    "firebase-functions": "^3.3.0"
+    "firebase-functions": "^3.3.0",
+    "jsonwebtoken": "^8.5.1"
   },
   "devDependencies": {
     "eslint": "^5.12.0",

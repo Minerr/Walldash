@@ -1,12 +1,13 @@
-const admin = require("firebase-admin");
-
+import admin from "firebase-admin";
+import dotenv from "dotenv";
 // Documentation
 // https://firebase.google.com/docs/reference/js/firebase.firestore.CollectionReference
 
+dotenv.config();
+
 // Init firestore database
-let serviceAccount = require("./service-accounts/walldash-database-4d4ce7a14eb3.json");
-admin.initializeApp({credential: admin.credential.cert(serviceAccount)});
-var db = admin.firestore();
+admin.initializeApp({credential: admin.credential.cert(process.env.DB_SERVICE_ACC)});
+const db = admin.firestore();
 
 // API functions
 // Get all
